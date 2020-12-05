@@ -34,9 +34,10 @@ const getRepoQuery = async (state) => {
       repo: repoName,
       status,
       headers: {
-        authorization: `token ${process.env.TOKEN}`,
+        authorization: `token ${process.env.GH_TOKEN}`,
       },
     });
+
 
     return repository;
   } catch (err) {
