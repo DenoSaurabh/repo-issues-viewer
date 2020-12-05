@@ -1,65 +1,101 @@
-import Head from 'next/head'
-import styles from '../styles/Home.module.css'
+import { useEffect, useState } from "react";
+
+import {
+  Heading,
+  Para,
+  BoldText,
+  Title,
+  Caption,
+  Span,
+} from "@styles/typography";
+import { Button } from "@styles/components/button";
+import { Input } from "@styles/components/input";
+import { IssueContainer } from "@styles/components/issue-container";
+import { FlexContainer } from "@styles/components/flex";
+import { Avatar, AvatarBox } from "@styles/components/avatar";
+
+import repoQuery from "../graphql/repo-query";
 
 export default function Home() {
+  const [state, setState] = useState({
+    repoUrl: "",
+    type: "issues",
+    status: "ALL",
+  });
+
+  const [data, setData] = useState(undefined);
+
+  const onInputChange = (e) => {
+    e.preventDefault();
+
+    setState({ ...state, repoUrl: e.target.value });
+  };
+
+  const onBtnClick = (e) => {
+    const { name } = e.target;
+
+    setState({ ...state, status: name });
+  };
+
+  // Effect
+  useEffect(async () => {
+      const repository = await repoQuery(state);
+      setData(repository);
+  }, [state]);
+
   return (
-    <div className={styles.container}>
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+    <div>
+      <Heading>Github Issues</Heading>
 
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
+      <Input
+        name="repo-url"
+        placeholder="Enter Repository Url"
+        value={state.repoUrl}
+        onChange={onInputChange}
+      />
 
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
+      <FlexContainer>
+        <Button name="ALL" onClick={onBtnClick}>
+          All
+        </Button>
+        <Button name="OPEN" onClick={onBtnClick}>
+          Open
+        </Button>
+        <Button name="CLOSED" onClick={onBtnClick}>
+          Closed
+        </Button>
+      </FlexContainer>
 
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
+      <FlexContainer direction="column">
+        {data && !data.type ? (
+          data.issues.nodes.map((el, i) => {
+            const { title, updatedAt, body } = el;
+            const { avatarUrl, login } = el.author || {};
 
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
+            // Elimnating Long Texts
+            const isLongBody = body.length > 200;
 
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
+            const modifiedBody = isLongBody
+              ? `${body.split(0, 200)[0]} ....`
+              : body;
 
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
+            return (
+              <IssueContainer key={i}>
+                <Title>{title}</Title>
+                <Para>{modifiedBody}</Para>
 
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a>
-      </footer>
+                <AvatarBox>
+                  <Avatar src={avatarUrl} size="30" />
+                  <BoldText>{login}</BoldText>
+                  <Span>{new Date(updatedAt).toLocaleDateString()}</Span>
+                </AvatarBox>
+              </IssueContainer>
+            );
+          })
+        ) : (
+          <Caption>Enter Correct GitHub Url</Caption>
+        )}
+      </FlexContainer>
     </div>
-  )
+  );
 }
