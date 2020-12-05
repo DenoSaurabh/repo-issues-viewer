@@ -10,7 +10,9 @@ const getRepoQuery = async (state) => {
   query repoQuery($owner: String!, $repo: String!) {
     repository(name: $repo, owner: $owner) {
       id
-      issues(first: 10, orderBy: {field: UPDATED_AT, direction: DESC} ${status === "ALL" ? "" : "states: " + status}) {
+      issues(first: 10, orderBy: {field: UPDATED_AT, direction: DESC} ${
+        status === "ALL" ? "" : "states: " + status
+      }) {
           nodes {
             id
             body
@@ -32,7 +34,7 @@ const getRepoQuery = async (state) => {
       repo: repoName,
       status,
       headers: {
-        authorization: `token a0cf1e76d381e94cee204888ccdd19d7bab6b0cf`,
+        authorization: `token ${process.env.TOKEN}`,
       },
     });
 
